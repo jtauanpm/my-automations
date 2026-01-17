@@ -39,13 +39,17 @@ var responseObj = JsonSerializer.Deserialize<FollowingResponse>(json,
 )!;
 
 
-using (var unfollowRequest = InstagramRequestFactory.BuildUnfollowRequest(responseObj.Users[0].Pk, config["Automations:Instagram:Username"]!, config["Automations.Instagram.jazoest"]))
-{
-    Log.Logger.Information("Trying to unfollow {User}.", responseObj.Users[0]);
-    
-    Console.WriteLine($"{responseObj.Users[0].FullName} @{responseObj.Users[0].Username}");
-    var jsonResponse = await client.SendAsync(unfollowRequest);
-}
+     Log.Logger.Information("Trying to unfollow {User}.", responseObj.Users[0]);
+     var result = await InstagramRequestFactory.MakeUnfollowCurlRequest(responseObj.Users[0].Pk, config);
+     Console.WriteLine($"{responseObj.Users[0].FullName} @{responseObj.Users[0].Username}");
+
+// using (var unfollowRequest = InstagramRequestFactory.BuildUnfollowRequest(responseObj.Users[0].Pk, config["Automations:Instagram:Username"]!, config["Automations.Instagram.jazoest"]))
+// {
+//     Log.Logger.Information("Trying to unfollow {User}.", responseObj.Users[0]);
+//     
+//     Console.WriteLine($"{responseObj.Users[0].FullName} @{responseObj.Users[0].Username}");
+//     var jsonResponse = await client.SendAsync(unfollowRequest);
+// }
 
 // Console.WriteLine(response.StatusCode);
 // Console.WriteLine(json);
