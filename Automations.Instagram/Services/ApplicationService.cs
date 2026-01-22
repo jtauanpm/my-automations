@@ -8,6 +8,8 @@ public static class ApplicationService
     // a very hopeful attempt to get Instagram to not block me
     private const int PageSize = 25;
 
+    // TODO: configure values by IConfiguration
+    // TODO: sleep tonigth
     public static async Task UnfollowNonFavoriteUsersAsync()
     {
         var count = 0;
