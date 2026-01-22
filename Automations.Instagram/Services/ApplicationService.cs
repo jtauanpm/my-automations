@@ -10,6 +10,8 @@ public static class ApplicationService
 
     public static async Task UnfollowNonFavoriteUsersAsync()
     {
+        var count = 0;
+        
         while (true)
         {
             var followingResponse = await GetFirstFollowingUsers();
@@ -27,9 +29,11 @@ public static class ApplicationService
                 try
                 {
                     await InstagramRequestService.MakeUnfollowRequest(user.Pk);
-                    Log.Logger.Information("{Index} - User unfollowed: {User}", index, user);
+                    
+                    count++;
+                    Log.Logger.Information("Total: {IndexTotal}; Relative {Index} - User unfollowed: {User}", count, index+1, user);
 
-                    var timeToAwait = TimeSpan.FromSeconds(Random.Shared.Next(5, 70));
+                    var timeToAwait = TimeSpan.FromSeconds(Random.Shared.Next(5, 10));
                     await Task.Delay(timeToAwait);
                 }
                 catch (Exception ex)
@@ -45,7 +49,7 @@ public static class ApplicationService
                 break;
             }
 
-            var betweenCyclesDelay = Random.Shared.Next(5, 181);
+            var betweenCyclesDelay = Random.Shared.Next(1, 3);
             Log.Logger.Information("---- Awaiting {Minutes} minutes for fetch next users ----", betweenCyclesDelay);
             await Task.Delay(TimeSpan.FromMinutes(betweenCyclesDelay));
         }
