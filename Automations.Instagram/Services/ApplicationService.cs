@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Automations.Instagram.DTOs;
 using Serilog;
 
@@ -9,7 +10,6 @@ public static class ApplicationService
     private const int PageSize = 25;
 
     // TODO: configure values by IConfiguration
-    // TODO: sleep tonigth
     public static async Task UnfollowNonFavoriteUsersAsync()
     {
         var count = 0;
@@ -51,6 +51,11 @@ public static class ApplicationService
                 break;
             }
 
+            if (ShouldIBeSleeping())
+            {
+                await Task.Delay(TimeSpan.FromHours(Random.Shared.Next(5, 7)));
+            }
+            
             var betweenCyclesDelay = Random.Shared.Next(1, 3);
             Log.Logger.Information("---- Awaiting {Minutes} minutes for fetch next users ----", betweenCyclesDelay);
             await Task.Delay(TimeSpan.FromMinutes(betweenCyclesDelay));
@@ -76,5 +81,28 @@ public static class ApplicationService
             Log.Logger.Error(ex, "Error when trying to fetch following users");
             throw;
         }
+    }
+
+    private static bool ShouldIBeSleeping()
+    {
+        var startBlock = new TimeSpan(22, 0, 0);
+        var endBlock   = new TimeSpan(6, 0, 0);
+
+        var current = BrazilTimeNow().TimeOfDay;
+
+        return !(current >= startBlock || current < endBlock);
+    }
+
+    private static DateTime BrazilTimeNow()
+    {
+        var utcNow = DateTime.UtcNow;
+
+        var brazilTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "E. South America Standard Time"
+                : "America/Sao_Paulo"
+        );
+
+        return TimeZoneInfo.ConvertTimeFromUtc(utcNow, brazilTimeZone);
     }
 }
