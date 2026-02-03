@@ -1,11 +1,11 @@
-﻿using System;
-using Automations.Instagram;
+﻿using Automations.Instagram;
 using Automations.Instagram.Services;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
 Configuration.Global = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
+    .AddEnvironmentVariables()
     .Build();
 
 Log.Logger = new LoggerConfiguration()
