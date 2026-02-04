@@ -1,0 +1,9 @@
+﻿services:
+  automations.instagram:
+    image: automations-instagram
+    container_name: insta-unfollow
+    volumes:
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    restart: unless-stopped
