@@ -1,9 +1,10 @@
-﻿services:
+﻿# define .env
+services:
   automations.instagram:
-    image: automations-instagram
+    image: jtauanpm/automations-instagram:1.0.0
     container_name: insta-unfollow
     volumes:
       - ./logs:/app/logs
     env_file:
       - .env
-    restart: unless-stopped
+#    restart: unless-stopped

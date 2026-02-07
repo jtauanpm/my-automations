@@ -1,4 +1,8 @@
-﻿#docker build -t automations-instagram -f Dockerfile .
+﻿#docker build -t jtauanpm/automations-instagram:1.0.x -f Dockerfile . 
+#docker tag jtauanpm/automations-instagram:1.0.x jtauanpm/automations-instagram:latest
+#docker push jtauanpm/automations-instagram:1.0.x
+#docker push jtauanpm/automations-instagram:latest
+
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS base
 USER $APP_UID
 WORKDIR /app
