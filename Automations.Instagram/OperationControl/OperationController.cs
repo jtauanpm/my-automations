@@ -17,7 +17,7 @@ public class OperationController(OperationControllerOptions options)
     {
         var random = RandomFromRangeOptions(options.MinutesBetweenInteractions);
         Log.Logger.Information("---- Awaiting {Minutes} minutes for fetch next users ----", random);
-        await Task.Delay(TimeSpan.FromSeconds(random));
+        await Task.Delay(TimeSpan.FromMinutes(random));
     }
     public int GetInteractionSize() => options.InteractionPageSize;
 
