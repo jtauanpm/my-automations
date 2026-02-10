@@ -13,6 +13,11 @@ public class OperationController(OperationControllerOptions options)
                 RandomFromRangeOptions(options.SecondsBetweenOperation)));
     }
     
+    public async Task HandleRequestFailed()
+    {
+        await Task.Delay(TimeSpan.FromSeconds(Random.Shared.Next(30, 120)));
+    }
+    
     public async Task DelayBetweenInteractions()
     {
         var random = RandomFromRangeOptions(options.MinutesBetweenInteractions);
@@ -31,7 +36,7 @@ public class OperationController(OperationControllerOptions options)
     
     private static async Task Sleep()
     {
-        var sleepTime = Random.Shared.Next(5, 7);
+        var sleepTime = Random.Shared.Next(4, 7);
         Log.Logger.Information("Sleeping {Hours} hours", sleepTime);
         await Task.Delay(TimeSpan.FromHours(sleepTime));
     }
@@ -43,7 +48,7 @@ public class OperationController(OperationControllerOptions options)
 
         var current = BrazilTimeNow().TimeOfDay;
 
-        return !(current >= startBlock || current < endBlock);
+        return current >= startBlock || current < endBlock;
     }
 
     private const string BrazilTimeZoneWindows = "E. South America Standard Time";
@@ -69,5 +74,4 @@ public class OperationController(OperationControllerOptions options)
             rangeOptions.Max);
         return seconds;
     }
-
 }
