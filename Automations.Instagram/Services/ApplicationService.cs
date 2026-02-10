@@ -5,10 +5,11 @@ namespace Automations.Instagram.Services;
 
 public class ApplicationService(OperationControl.OperationController operationController)
 {
+    private int _unfollowCounter;
+    
     public async Task UnfollowNonFavoriteUsersAsync()
     {
         Log.Logger.Information("------ Starting to unfollow ------");
-        var count = 0;
         
         while (true)
         {
@@ -23,20 +24,7 @@ public class ApplicationService(OperationControl.OperationController operationCo
                          .Where(u => !u.IsFavorite)
                          .Select((user, index) => (user, index)))
             {
-                try
-                {
-                    await InstagramRequestService.MakeUnfollowRequest(user.Pk);
-                    
-                    count++;
-                    Log.Logger.Information("Total: {IndexTotal}; Relative {Index} - User unfollowed: {User}", count, index+1, user);
-
-                    await operationController.DelayBetweenOperations();
-                }
-                catch (Exception ex)
-                {
-                    Log.Logger.Error(ex, "Error while trying to unfollow {User}", user);
-                    throw;
-                }
+                await UnfollowUser(user, index);
             }
 
             if (!followingResponse.HasMore)
@@ -51,21 +39,61 @@ public class ApplicationService(OperationControl.OperationController operationCo
         }
     }
 
+    private async Task UnfollowUser(InstagramUser user, int index)
+    {
+        const int maxAttempts = 3;
+        
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                await InstagramRequestService.MakeUnfollowRequest(user.Pk);
+
+                _unfollowCounter++;
+                Log.Logger.Information("Total:{IndexTotal}; Interation Relative:{Index} - User unfollowed: {User}",
+                    _unfollowCounter, index + 1, user);
+
+                await operationController.DelayBetweenOperations();
+            }
+            catch (Exception ex)
+            {
+                Log.Logger.Error(ex, "Error while trying to unfollow {User}. Attempt {Attempt}/{MaxAttempts}", 
+                    user, attempt, maxAttempts);
+                
+                if (attempt == maxAttempts) throw;
+                
+                await operationController.HandleRequestFailed();
+            }
+        }
+    }
+
     private async Task<FollowingResponse> GetFirstFollowingUsers()
     {
-        try
+        const int maxAttempts = 3;
+        
+        var size = operationController.GetInteractionSize();
+        var followingInput = new FollowingRequestInput { Count = size, MaxId = size };
+        
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            var size = operationController.GetInteractionSize();
-            var followingInput = new FollowingRequestInput { Count = size, MaxId = size };
-
-            Log.Logger.Debug("Fetching first {PageSize} following users", size);
-
-            return await InstagramRequestService.MakeFollowingRequest(followingInput);
+            try
+            {
+                Log.Logger.Information("Fetching first {PageSize} following users", size);
+                return await InstagramRequestService.MakeFollowingRequest(followingInput);
+            }
+            catch (HttpRequestException ex)
+            {
+                Log.Logger.Warning(ex, "Error when trying to fetch following users. Attempt {Attempt}/{MaxAttempts}",
+                    attempt, maxAttempts
+                );
+                
+                if (attempt == maxAttempts) throw;
+                
+                await operationController.HandleRequestFailed();
+            }
         }
-        catch (Exception ex)
-        {
-            Log.Logger.Error(ex, "Error when trying to fetch following users");
-            throw;
-        }
+        
+        // this will never be executed, but the compiler isnt smart enough to know that
+        throw new InvalidOperationException("Failed to fetch following users after retries");
     }
 }
