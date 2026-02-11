@@ -44,7 +44,7 @@ public sealed class InstagramUser
 
     public override string ToString()
     {
-        return $"PK: {Pk} - {FullName} (@{Username})";
+        return $"PK: {Pk}- {FullName} (@{Username})";
     }
 }
 
