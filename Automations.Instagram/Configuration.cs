@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Automations.Instagram.OperationControl;
 using Microsoft.Extensions.Configuration;
+using Serilog;
 
 namespace Automations.Instagram;
 
@@ -11,6 +13,10 @@ public static class Configuration
     {
         var result = new OperationControllerOptions();
         Global.GetSection(OperationControllerOptions.SectionName).Bind(result);
+        
+        Log.Logger.Information("Using OperationControlOptions: {Options}", 
+            JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+        
         return result;
     }
 }
