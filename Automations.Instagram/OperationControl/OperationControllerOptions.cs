@@ -6,8 +6,8 @@ public class OperationControllerOptions
     public int InteractionPageSize { get; set; } = 25;
     public RangeOptions SecondsBetweenOperation { get; set; } = new()
     {
-        Min = 5,
-        Max = 10
+        Min = 3,
+        Max = 7
     };
 
     public RangeOptions MinutesBetweenInteractions { get; set; } = new()

@@ -54,6 +54,7 @@ public class ApplicationService(OperationControl.OperationController operationCo
                     _unfollowCounter, index + 1, user);
 
                 await operationController.DelayBetweenOperations();
+                return;
             }
             catch (Exception ex)
             {
