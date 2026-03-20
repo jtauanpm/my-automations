@@ -67,6 +67,34 @@ public class InstagramRequestService
         return (await response.Content.ReadFromJsonAsync<FollowingResponse>())!;
     }
 
+    public static async Task<FollowingResponse> MakeFollowersRequest(FollowersRequestInput input)
+    {
+        var query = new StringBuilder();
+        query.Append($"count={input.Count}");
+        query.Append($"&search_surface={input.SearchSurface}");
+
+        if (!string.IsNullOrWhiteSpace(input.MaxId))
+        {
+            query.Append($"&max_id={input.MaxId}");
+        }
+
+        var userId = Configuration.Global["Automations:Instagram:UserId"];
+
+        var url =
+            $"https://www.instagram.com/api/v1/friendships/{userId}/followers/?{query}";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Referrer =
+            new Uri($"https://www.instagram.com/{userId}/followers/");
+
+        var client = GetClient();
+        var response = await client.SendAsync(request);
+
+        response.EnsureSuccessStatusCode();
+
+        return (await response.Content.ReadFromJsonAsync<FollowingResponse>())!;
+    }
+
     public static async Task<string> MakeUnfollowRequest(string userIdToUnfollow)
     {
         var client = new HttpClient();
@@ -109,6 +137,50 @@ public class InstagramRequestService
             $"jazoest={Configuration.Global["Instagram:jazoest"]}"
         );
 
+        request.Content.Headers.ContentType =
+            new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    public static async Task<string> MakeRemoveFollowerRequest(string userIdToRemove)
+    {
+        var client = new HttpClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"https://www.instagram.com/api/v1/friendships/remove_follower/{userIdToRemove}/"
+        );
+
+        request.Headers.Add("accept", "*/*");
+        request.Headers.Add("accept-language", "en-US,en;q=0.9,pt;q=0.8");
+        request.Headers.Add("origin", "https://www.instagram.com");
+        request.Headers.Add("priority", "u=1, i");
+        request.Headers.Add("referer", $"https://www.instagram.com/{Configuration.Global["Automations:Instagram:UserId"]}/followers/");
+        request.Headers.Add("sec-ch-prefers-color-scheme", "dark");
+        request.Headers.Add("sec-ch-ua", "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"");
+        request.Headers.Add("sec-ch-ua-full-version-list", "\"Google Chrome\";v=\"143.0.7499.169\", \"Chromium\";v=\"143.0.7499.169\", \"Not A(Brand\";v=\"24.0.0.0\"");
+        request.Headers.Add("sec-ch-ua-mobile", "?0");
+        request.Headers.Add("sec-ch-ua-model", "\"\"");
+        request.Headers.Add("sec-ch-ua-platform", "\"Linux\"");
+        request.Headers.Add("sec-ch-ua-platform-version", "\"6.17.9\"");
+        request.Headers.Add("sec-fetch-dest", "empty");
+        request.Headers.Add("sec-fetch-mode", "cors");
+        request.Headers.Add("sec-fetch-site", "same-origin");
+        request.Headers.Add("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
+        request.Headers.Add("x-asbd-id", "359341");
+        request.Headers.Add("x-ig-app-id", "936619743392459");
+        request.Headers.Add("x-requested-with", "XMLHttpRequest");
+
+        AddHeaderFromConfig(request, "cookie");
+        AddHeaderFromConfig(request, "x-csrftoken");
+        AddHeaderFromConfig(request, "x-ig-www-claim");
+        AddHeaderFromConfig(request, "x-instagram-ajax");
+        AddHeaderFromConfig(request, "x-web-session-id");
+
+        request.Content = new StringContent(string.Empty);
         request.Content.Headers.ContentType =
             new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 

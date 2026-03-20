@@ -1,6 +1,7 @@
 ﻿using Automations.Instagram;
 using Automations.Instagram.OperationControl;
 using Automations.Instagram.Services;
+using Automations.Instagram.Services.RunModes;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
@@ -15,6 +16,13 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 var operationController = new OperationController(Configuration.GetOperationControlOptions());
-var service = new ApplicationService(operationController);
+var service = new ApplicationService(
+[
+    new UnfollowRunModeService(operationController),
+    new RemoveFollowersRunModeService(operationController)
+]);
 
-await service.UnfollowNonFavoriteUsersAsync();
+var runMode = Configuration.GetRunMode();
+await service.RunAsync(runMode);
+
+Log.Logger.Information("------ Execution completed. ------");
