@@ -69,30 +69,61 @@ public class InstagramRequestService
 
     public static async Task<FollowingResponse> MakeFollowersRequest(FollowersRequestInput input)
     {
-        var query = new StringBuilder();
-        query.Append($"count={input.Count}");
-        query.Append($"&search_surface={input.SearchSurface}");
+        var userId = Configuration.Global["Automations:Instagram:UserId"];
+        var currentMaxId = input.MaxId;
+        var visitedMaxIds = new HashSet<string>(StringComparer.Ordinal);
+        const int maxEmptyPagesToSkip = 5;
 
-        if (!string.IsNullOrWhiteSpace(input.MaxId))
+        for (var emptyPagesSkipped = 0; emptyPagesSkipped <= maxEmptyPagesToSkip; emptyPagesSkipped++)
         {
-            query.Append($"&max_id={input.MaxId}");
+            var query = new StringBuilder();
+            query.Append($"count={input.Count}");
+            query.Append($"&search_surface={input.SearchSurface}");
+
+            if (!string.IsNullOrWhiteSpace(currentMaxId))
+            {
+                query.Append($"&max_id={currentMaxId}");
+            }
+
+            var url =
+                $"https://www.instagram.com/api/v1/friendships/{userId}/followers/?{query}";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Referrer =
+                new Uri($"https://www.instagram.com/{userId}/followers/");
+
+            var client = GetClient();
+            var response = await client.SendAsync(request);
+
+            response.EnsureSuccessStatusCode();
+
+            var followersResponse = (await response.Content.ReadFromJsonAsync<FollowingResponse>())!;
+            if (followersResponse.Users.Count > 0)
+            {
+                return followersResponse;
+            }
+
+            var nextMaxId = followersResponse.NextMaxId;
+            if (string.IsNullOrWhiteSpace(nextMaxId) || !followersResponse.HasMore)
+            {
+                return followersResponse;
+            }
+
+            // Prevent cursor loops: if Instagram repeats the same max_id, we stop.
+            if (!visitedMaxIds.Add(nextMaxId))
+            {
+                return followersResponse;
+            }
+
+            currentMaxId = nextMaxId;
         }
 
-        var userId = Configuration.Global["Automations:Instagram:UserId"];
-
-        var url =
-            $"https://www.instagram.com/api/v1/friendships/{userId}/followers/?{query}";
-
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Referrer =
-            new Uri($"https://www.instagram.com/{userId}/followers/");
-
-        var client = GetClient();
-        var response = await client.SendAsync(request);
-
-        response.EnsureSuccessStatusCode();
-
-        return (await response.Content.ReadFromJsonAsync<FollowingResponse>())!;
+        return new FollowingResponse
+        {
+            Users = [],
+            HasMore = false,
+            Status = "ok"
+        };
     }
 
     public static async Task<string> MakeUnfollowRequest(string userIdToUnfollow)
